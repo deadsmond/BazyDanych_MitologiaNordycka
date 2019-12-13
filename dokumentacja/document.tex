@@ -1,0 +1,115 @@
+\documentclass[11pt]{article}
+\usepackage{tikz}
+\usepackage{polski}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, total={7in, 10.5in}]{geometry} % marginesy
+
+\usetikzlibrary{er,positioning}
+
+\begin{document}
+	
+	\title{Projekt bazy danych "Mitologia nordycka"}
+	\author{Adam Lewicki}
+	\maketitle
+\section{Opis}
+
+Baza danych "Mitologia nordycka" ma za zadanie przechowywać dane istot o mocach nadprzyrodzonych, występujących w mitologii nordyckiej oraz zbioru ich cech/atrybutów, które reprezentują swoimi osobami poprzez przypisanie każdemu bohaterowi artefaktu o szczególnych właściwościach - dane tych artefaktów rówież będą przechowywane w bazie. 
+Właściwa dla mitologii nordyckiej jest również sieć powiązań rodzinnych między bohaterami, co zostanie zaznaczone przez odpowiednią relację.
+
+Całość pozwoli na podsumowanie wiedzy na temat mitologii nordyckiej.
+
+\section{Schematy koncepcyjne bazy}
+\subsection{Diagram związków encji (ERD)}
+
+\begin{center}\begin{tikzpicture}[auto,node distance=1.5cm]
+
+  \node[entity] (node1) {Bóstwa}
+    [grow=up,sibling distance=2cm]
+    child {node[attribute] {płeć}}
+    child {node[attribute] {rodzaj}}
+    child {node[attribute] {\underline{imię}}}
+    ;
+
+  \node[relationship] (rel1) [below left = of node1] {Opiekun};
+
+  \node[entity] (node2) [below = of rel1]	{Dziedzina}
+   [grow=down,sibling distance=2cm]
+  child {node[attribute] {\underline{nazwa}}};
+
+  \path (rel1) edge node {M} (node1) edge node {0..N} (node2);
+  %--------------------------------------------------------
+  \node[relationship] (rel2) [below = of node1] {Zdolność};
+  
+  \node[entity] (node3) [below = of rel2]	{Cecha}
+  [grow=down,sibling distance=2cm]
+  child {node[attribute] {\underline{nazwa}}};
+  
+  \path (rel2) edge node {N} (node3) edge node {M} (node1);
+  %--------------------------------------------------------
+  \node[relationship] (rel3) [below right = of node1] {Pokonany};
+  \node[entity] (nodetemp) [below right= of rel3]	{\textit{[Bóstwa]}};
+  
+  \path (rel3) edge node {1} (node1) edge node {0..N} (nodetemp);
+  %--------------------------------------------------------
+  \node[relationship] (rel4) [right = of node1] {Posiada};
+  
+  \node[entity] (node4) [right = of rel4]	{Artefakty}
+  [grow=up,sibling distance=2cm]
+  child [grow=north east]{node[attribute] {typ}}
+  child [grow=north west]{node[attribute] {\underline{nazwa}}}
+  child [grow=south west]{node[attribute] {efekt}}
+  child [grow=south east]{node[attribute] {rodzaj}}
+  ;
+  
+  \path (rel4) edge node {0..N} (node4) edge node {1} (node1);
+  %------------------------------------------------------
+  \node[relationship] (rel5) [left = of node1] {Powiązanie};
+  
+  \node[attribute] (att1) [left = of rel5] {rodzaj};
+  
+  \node[entity] (node5) [below left= of rel5]	{\textit{[Bóstwa]}};
+  
+  \path (rel5) edge node {N} (node5) edge node {M} (node1);
+  \path (rel5) edge node {} (att1);
+  %--------------------------------------------------------
+  
+  
+\end{tikzpicture}\end{center}
+
+\subsection{Model relacyjny (RM)}
+
+Bóstwa (\underline{imię}, rodzaj, płeć ) \newline
+Artefakty (\underline{nazwa}, typ, rodzaj, efekt) \newline
+Pokonany (\textit{zwycięzca}, \underline{\textit{pokonany}}) \newline
+Posiada (\textit{bóstwo}, \underline{\textit{artefakt}}) \newline
+Zdolność (\underline{\textit{bóstwo}}, \underline{\textit{cecha}}) \newline
+Opiekun (\underline{\textit{bóstwo}}, \underline{\textit{dziedzina}}) \newline
+Powiązanie (\underline{\textit{probant}}, \underline{rodzaj}, \underline{\textit{postać}}) \newline
+
+\newpage
+
+\section{Reguły logiki bazy}
+\begin{enumerate}
+	\item Jest tylko jedno bóstwo o danym imieniu.
+	\item Każde bóstwo należy do jakiegoś rodzaju. Nie istnieje rodzaj bez swojego przedstawiciela i mogą istnieć rodzaje z tylko jednym przedstawicielem. Domyślnym rodzajem jest "istota".
+	\item Każda istota może być tylko płci męskiej lub żeńskiej, oznaczanym odpowiednio 'M' i 'K'.
+	\item Bóstwo może być opiekunem dowolnej liczby dziedzin i co najmniej jedno bóstwo opiekuje się dziedziną - bóstwo nie musi opiekować się dziedzinami, ale nie ma dziedzin bez opiekuna.
+	\item Bóstwo może mieć cechy, które może dzielić z innymi bóstwami. Nie ma cech bez bóstw.
+	\item Każde bóstwo mogło pokonać dowolną liczbę innych bóstw, ale mogło zostać pokonane tylko raz. Domyślnie jeśli nie wiadomo kto pokonał bóstwo, była to Hela, bogini śmierci, któej dana jest każda dusza.
+	\item Bóstwo może posiadać wiele artefaktów. Artefakt ma zawsze jednego właściciela.
+	\item Każdy artefakt ma unikalną nazwę oraz posiada efekt i przynależy do kategorii 'Broń', 'Ozdoba', 'Pojazd' lub 'Inne'. Domyślnym typem artefaktu jest "Inne", a rodzajem - "Przedmiot".
+	\item Każdy bóg może być powiązany z innym przez więzy rodzinne, małżeńskie lub osobiste - przez rodzaje powiązań 'rodzic' i 'dziecko', 'mąż' i 'żona' oraz 'rodzeństwo'. Powiązania są symetryczne - jeśli istnieje powiązanie 'rodzic', to istnieje odwrotne powiązanie 'dziecko'. 
+	\item Nie można nawiązać relacji powiązania bez określenia jej rodzaju.
+	\item Dwóch bogów może łączyć wiele powiązań. 
+\end{enumerate}
+
+\section{Opis funkcjonalności}
+
+Baza danych będzie realizować funkcje:
+\begin{itemize}
+	\item dodawania/usuwania/modyfikacji bóstwa/artefaktów i ich atrybutów w innych relacjach
+	\item dodawania/usuwania/modyfikacji powiązań bóstw wraz z aktualizacją powiązań symetrycznych - przy dodaniu powiązania jest sprawdzana egzystencja symetrii i ewentualnie dodawana. Przykładowo, wstawienie powiązania ('Odyn', 'rodzic, 'Thor') powoduje równoległe wstawienie powiązania ('Thor', 'dziecko', 'Odyn').
+	\item wskazywania rodziców (według płci lub oboje naraz), rodzeństwa i potomków bóstwa
+\end{itemize}
+
+\end{document}
